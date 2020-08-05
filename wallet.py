@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[103]:
+# In[1]:
 
 
 # import libraries
@@ -21,7 +21,7 @@ from web3.gas_strategies.time_based import medium_gas_price_strategy
 load_dotenv()
 
 
-# In[104]:
+# In[2]:
 
 
 # import mnemonic from env
@@ -34,7 +34,7 @@ mnemonic = os.getenv('MNEMONIC')
 print(mnemonic)
 
 
-# In[105]:
+# In[3]:
 
 
 # connect to local ETH/ geth
@@ -43,7 +43,7 @@ w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 w3.eth.setGasPriceStrategy(medium_gas_price_strategy)
 
 
-# In[119]:
+# In[4]:
 
 
 # Define function to derive wallet
@@ -58,14 +58,14 @@ def derive_wallets(mnemonic, coin, numderive):
     return  keys
 
 
-# In[125]:
+# In[5]:
 
 
 # Test the function derive_wallets
 derive_wallets(mnemonic, 'BTC', 3)
 
 
-# In[120]:
+# In[6]:
 
 
 #Setting dictionary of coins to be used in the wallet
@@ -73,7 +73,7 @@ coins = {"eth", "btc-test", "btc"}
 numderive = 3
 
 
-# In[127]:
+# In[7]:
 
 
 # 
@@ -82,7 +82,7 @@ for coin in coins:
     keys[coin]= derive_wallets(mnemonic, coin, numderive=3)
 
 
-# In[128]:
+# In[8]:
 
 
 
@@ -93,7 +93,13 @@ print(json.dumps(eth_PrivateKey, indent=4, sort_keys=True))
 print(json.dumps(btc_PrivateKey, indent=4, sort_keys=True))
 
 
-# In[129]:
+# In[9]:
+
+
+print(json.dumps(keys, indent=4, sort_keys=True))
+
+
+# In[9]:
 
 
 # create a function that convert the privkey string in a child key to an account object.
@@ -106,7 +112,7 @@ def priv_key_to_account(coin,priv_key):
         return PrivateKeyTestnet(priv_key)
 
 
-# In[130]:
+# In[10]:
 
 
 def create_tx(coin,account, recipient, amount):
@@ -127,14 +133,14 @@ def create_tx(coin,account, recipient, amount):
         return PrivateKeyTestnet.prepare_transaction(account.address, [(recipient, amount, BTC)])
 
 
-# In[138]:
+# In[11]:
 
 
 # create a function to hold Ethereum 
 eth_acc = priv_key_to_account(ETH, derive_wallets(mnemonic, ETH,5)[0]['privkey'])
 
 
-# In[115]:
+# In[33]:
 
 
 # create a function to send txn
@@ -143,51 +149,77 @@ def send_txn(coin,account,recipient, amount):
     if coin == ETH:
         signed_txn = eth_acc.sign_transaction(txn)
         result = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
+        print(result.hex())
         return result.hex()
     elif coin == BTCTEST:
+        tx_btctest = create_tx(coin, account, recipient, amount)
         signed_txn = account.sign_transaction(txn)
+        print(signed_txn)
         return NetworkAPI.broadcast_tx_testnet(signed_txn)
-
-
-# In[133]:
-
-
-#use the send_txn function to send transactions 
-send_txn(ETH,eth_acc,'0x46BbdBf56ff911A93AdaF0164d0709F78B52765E',1)
 
 
 # ## BTC-TEST Transactions
 
-# In[144]:
+# In[15]:
 
 
 btc_acc = priv_key_to_account(BTCTEST,btc_PrivateKey)
 
 
-# In[149]:
+# In[23]:
 
 
 # create BTC transaction
-create_tx(BTCTEST,btc_acc,"mtK73sNPY9CKuzVvpv4W1969AD1UmGGfsX", 0.1)
+create_tx(BTCTEST,btc_acc,"n3D8vVvLyD7pPQmWoQgMMERZrDjmBheBpU", 0.1)
 
 
-# In[151]:
+# In[34]:
 
 
 # Send BTC transaction
-create_tx(BTCTEST,btc_acc,"mtK73sNPY9CKuzVvpv4W1969AD1UmGGfsX", 0.1)
+send_txn(BTCTEST,btc_acc,"mtK73sNPY9CKuzVvpv4W1969AD1UmGGfsX", 0.1)
 
 
 # ## ETH Transactions
 
-# In[147]:
+# In[37]:
 
 
-w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+#connecting to HTTP with address pk
+w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545/0x30c2577db89760baa9ba4058b1033b9e103f287e5de1689e35833ee8e7a7c857"))
 
 
-# In[ ]:
+# In[38]:
 
 
+# double check if  I am connected to blockchain. 
+w3.isConnected()
 
+
+# ## Check the Balance of the account with local mining blockchain
+
+# In[39]:
+
+
+w3.eth.getBalance("0x46BbdBf56ff911A93AdaF0164d0709F78B52765E")
+
+
+# In[41]:
+
+
+create_tx(ETH,eth_acc,"0x3dA0F09EF6F833b179768a63AdD29061e0702e47", 1000)
+
+
+# In[42]:
+
+
+send_txn(ETH, eth_acc,"0x3dA0F09EF6F833b179768a63AdD29061e0702e47", 1000)
+
+
+# ## Confirmation of 
+
+# In[43]:
+
+
+w3.eth.getBalance("0x3dA0F09EF6F833b179768a63AdD29061e0702e47")
 
